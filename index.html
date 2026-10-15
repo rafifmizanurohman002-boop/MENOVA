@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Menova Simulator</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#ECE4D6;--card:#fff;--ink:#122E2A;--mut:#60706A;--pri:#16786C;--acc:#B84E1E;--line:#d9d0bf;--soft:#f6f1e8}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1f1c;--card:#16302b;--ink:#ECE4D6;--mut:#9db0a9;--pri:#2aa395;--acc:#e07a45;--line:#2a4a43;--soft:#1b3a34}}
+:root[data-theme="dark"]{--bg:#0e1f1c;--card:#16302b;--ink:#ECE4D6;--mut:#9db0a9;--pri:#2aa395;--acc:#e07a45;--line:#2a4a43;--soft:#1b3a34}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*:before,*:after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.4 Calibri,Arial,system-ui,sans-serif}
+header{display:flex;align-items:center;gap:12px;padding:14px 18px;background:#122E2A;color:#ECE4D6}
+header b{font-size:20px;letter-spacing:.5px}header span{opacity:.75;font-size:13px}
+.tabs{display:flex;gap:6px;padding:10px 14px 0}
+.tabs button{flex:1}
+button{font:inherit;cursor:pointer;border:0;border-radius:10px;padding:9px 14px;background:var(--soft);color:var(--ink)}
+button.p{background:var(--pri);color:#fff;font-weight:600}
+button.a{background:var(--acc);color:#fff;font-weight:600}
+button.on{background:var(--pri);color:#fff}
+button:disabled{opacity:.4;cursor:not-allowed}
+main{display:grid;grid-template-columns:1fr;gap:18px;padding:14px;max-width:1280px;margin:0 auto}
+@media(min-width:900px){main{grid-template-columns:390px 1fr;align-items:start}.tabs{display:none}.pane{display:block!important}}
+.pane{display:none}.pane.show{display:block}
+.phone{background:var(--card);border:6px solid #122E2A;border-radius:30px;overflow:hidden;min-height:620px;display:flex;flex-direction:column;max-width:390px;margin:0 auto}
+.ph-top{background:#122E2A;color:#ECE4D6;padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
+.ph-body{padding:14px;flex:1;overflow:auto;max-height:640px}
+.cats{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px}
+.cats button{white-space:nowrap}
+.item{display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.em{font-size:30px;width:52px;height:52px;border-radius:12px;background:var(--soft);display:grid;place-items:center;flex:none}
+.item .t{flex:1;min-width:0}.item .t b{display:block}.mut{color:var(--mut);font-size:13px}
+.qty{display:flex;align-items:center;gap:8px}.qty button{padding:4px 11px}
+.bar{padding:12px 14px;border-top:1px solid var(--line)}
+.center{text-align:center}
+.qr{width:190px;height:190px;margin:14px auto;padding:10px;background:#fff;border-radius:12px;display:block}
+.steps{display:flex;justify-content:space-between;margin:18px 0;position:relative}
+.step{flex:1;text-align:center;font-size:12px;color:var(--mut)}
+.step i{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;margin:0 auto 4px;background:var(--soft);font-style:normal;font-weight:700}
+.step.done{color:var(--ink)}.step.done i{background:var(--pri);color:#fff}
+input,select{font:inherit;width:100%;padding:9px 10px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+label{display:block;font-size:13px;color:var(--mut);margin:10px 0 4px}
+.dash{background:var(--card);border-radius:18px;padding:16px}
+.dtabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.col{background:var(--soft);border-radius:14px;padding:10px;min-height:160px}
+.col h4{margin:0 0 8px;display:flex;justify-content:space-between}
+.ord{background:var(--card);border-radius:12px;padding:10px;margin-bottom:8px;border-left:4px solid var(--pri)}
+.ord.s1{border-color:var(--acc)}.ord.s2{border-color:var(--mut)}
+.tag{display:inline-block;font-size:12px;padding:2px 8px;border-radius:99px;background:var(--pri);color:#fff}
+.row{display:grid;grid-template-columns:34px 1.4fr 1fr .7fr auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.row input{padding:6px 8px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.stat{background:var(--soft);border-radius:14px;padding:14px}.stat b{font-size:22px;display:block}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#122E2A;color:#ECE4D6;padding:10px 16px;border-radius:99px;opacity:0;transition:.3s;pointer-events:none;z-index:9}
+.toast.show{opacity:1}
+table{width:100%;border-collapse:collapse}td,th{text-align:left;padding:6px 4px;border-bottom:1px solid var(--line)}
+.scroll{overflow-x:auto}
+</style>
+</head>
+<body>
+<header><b>MENOVA</b><span>Simulator • Scan QR → Pesan → Dashboard</span>
+<span style="margin-left:auto"><button onclick="resetAll()" style="padding:6px 10px">Reset demo</button></span></header>
+<div class="tabs"><button id="tc" class="on" onclick="pane('c')">📱 Pelanggan</button><button id="td" onclick="pane('d')">🧾 Dashboard <span id="badge"></span></button></div>
+<main>
+<section class="pane show" id="pc"><div class="phone" id="phone"></div></section>
+<section class="pane" id="pd"><div class="dash"><div class="dtabs" id="dtabs"></div><div id="dbody"></div></div></section>
+</main>
+<div class="toast" id="toast"></div>
+<script>
+const ST=['Diterima','Diproses','Selesai'];
+const rp=n=>'Rp'+Number(n).toLocaleString('id-ID');
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const DEF={menu:[
+{id:1,name:'Espresso',cat:'Kopi',price:18000,stock:20,em:'☕'},
+{id:2,name:'Americano',cat:'Kopi',price:20000,stock:20,em:'☕'},
+{id:3,name:'Kopi Susu Gula Aren',cat:'Kopi',price:24000,stock:25,em:'🧋'},
+{id:4,name:'Latte',cat:'Kopi',price:26000,stock:15,em:'🥛'},
+{id:5,name:'Matcha Latte',cat:'Non-Kopi',price:28000,stock:12,em:'🍵'},
+{id:6,name:'Teh Tarik',cat:'Non-Kopi',price:18000,stock:20,em:'🫖'},
+{id:7,name:'Coklat Panas',cat:'Non-Kopi',price:24000,stock:10,em:'🍫'},
+{id:8,name:'Roti Bakar',cat:'Makanan',price:20000,stock:12,em:'🍞'},
+{id:9,name:'Nasi Goreng',cat:'Makanan',price:32000,stock:10,em:'🍳'},
+{id:10,name:'Kentang Goreng',cat:'Makanan',price:22000,stock:3,em:'🍟'}],orders:[],seq:1,nid:11};
+let S=load();let cart={},table=5,step='scan',cat='Semua',myId=null,dtab='orders',pend='';
+function load(){try{const r=localStorage.getItem('menova-sim');if(r)return JSON.parse(r)}catch(e){}return JSON.parse(JSON.stringify(DEF))}
+function save(){try{localStorage.setItem('menova-sim',JSON.stringify(S))}catch(e){}}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove('show'),2200)}
+function pane(w){document.getElementById('pc').classList.toggle('show',w=='c');document.getElementById('pd').classList.toggle('show',w=='d');
+document.getElementById('tc').classList.toggle('on',w=='c');document.getElementById('td').classList.toggle('on',w=='d')}
+const find=id=>S.menu.find(m=>m.id==id);
+const cartList=()=>Object.entries(cart).filter(([,q])=>q>0).map(([id,q])=>({m:find(id),q}));
+const cartTotal=()=>cartList().reduce((a,x)=>a+x.m.price*x.q,0);
+const cartQty=()=>cartList().reduce((a,x)=>a+x.q,0);
+
+/* ---------- QR (dekoratif) ---------- */
+function qrSvg(seed){let s=seed*9301+49297,n=21,c='';const r=()=>(s=(s*9301+49297)%233280)/233280;
+const fin=(x,y)=>(x<7&&y<7)||(x>13&&y<7)||(x<7&&y>13);
+for(let y=0;y<n;y++)for(let x=0;x<n;x++){let on;
+if(fin(x,y)){const lx=x%14,ly=y%14;const a=x>13?x-14:x,b=y>13?y-14:y;on=a==0||a==6||b==0||b==6||(a>=2&&a<=4&&b>=2&&b<=4)}
+else if((x==7||y==7||x==13&&y<8||y==13&&x<8)&&(x<8&&y<8||x>12&&y<8||x<8&&y>12))on=false;else on=r()>.5;
+if(on)c+=`<rect x="${x}" y="${y}" width="1" height="1"/>`}
+return `<svg class="qr" viewBox="-1 -1 23 23" fill="#122E2A" shape-rendering="crispEdges">${c}</svg>`}
+
+/* ---------- PELANGGAN ---------- */
+function renderC(){const p=document.getElementById('phone');let h='',foot='';
+const top=(t,back)=>`<div class="ph-top"><span>${back?`<button onclick="${back}" style="padding:2px 9px">←</button> `:''}<b>${t}</b></span><span class="mut" style="color:#ECE4D6">Meja ${table}</span></div>`;
+if(step=='scan'){
+h=top('Menova')+`<div class="ph-body center"><p class="mut" style="margin-top:20px">Simulasi: pelanggan duduk di meja dan scan QR</p>${qrSvg(table)}
+<label>Pilih meja (tiap meja punya QR unik)</label><select onchange="table=+this.value;renderC()">${[1,2,3,4,5,6,7,8].map(i=>`<option ${i==table?'selected':''} value="${i}">Meja ${i}</option>`).join('')}</select>
+<p><button class="p" style="width:100%;padding:13px" onclick="step='menu';renderC()">📷 Scan QR Meja ${table}</button></p></div>`}
+else if(step=='menu'){
+const cats=['Semua',...new Set(S.menu.map(m=>m.cat))];
+h=top('Kafe Menova','step=\'scan\';renderC()')+`<div class="ph-body"><div class="cats">${cats.map(c=>`<button class="${c==cat?'on':''}" onclick="cat='${c}';renderC()">${c}</button>`).join('')}</div>`+
+S.menu.filter(m=>cat=='Semua'||m.cat==cat).map(m=>{const q=cart[m.id]||0,left=m.stock-q;
+return `<div class="item"><div class="em">${esc(m.em)}</div><div class="t"><b>${esc(m.name)}</b><span class="mut">${rp(m.price)} • ${m.stock<=0?'Habis':'Stok '+m.stock}</span></div>
+<div class="qty">${q?`<button onclick="chg(${m.id},-1)">−</button><b>${q}</b>`:''}<button class="p" ${left<=0?'disabled':''} onclick="chg(${m.id},1)">+</button></div></div>`}).join('')+'</div>';
+if(cartQty())foot=`<div class="bar"><button class="p" style="width:100%;padding:12px" onclick="step='cart';renderC()">Lihat keranjang • ${cartQty()} item • ${rp(cartTotal())}</button></div>`}
+else if(step=='cart'){
+h=top('Keranjang',"step='menu';renderC()")+`<div class="ph-body">`+cartList().map(x=>`<div class="item"><div class="em">${esc(x.m.em)}</div><div class="t"><b>${esc(x.m.name)}</b><span class="mut">${rp(x.m.price)}</span></div>
+<div class="qty"><button onclick="chg(${x.m.id},-1)">−</button><b>${x.q}</b><button class="p" ${x.m.stock-x.q<=0?'disabled':''} onclick="chg(${x.m.id},1)">+</button></div></div>`).join('')+
+`<label>Nomor meja</label><select onchange="table=+this.value">${[1,2,3,4,5,6,7,8].map(i=>`<option ${i==table?'selected':''} value="${i}">Meja ${i}</option>`).join('')}</select>
+<label>Nama (opsional)</label><input id="cn" placeholder="Nama pemesan"><label>Catatan</label><input id="cx" placeholder="Contoh: less sugar"></div>`;
+foot=`<div class="bar"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><span>Total</span><b>${rp(cartTotal())}</b></div><button class="a" style="width:100%;padding:12px" onclick="submitOrder()">Kirim pesanan</button></div>`}
+else{const o=S.orders.find(x=>x.id==myId);
+if(!o){step='menu';return renderC()}
+const si=ST.indexOf(o.status);
+h=top('Status pesanan')+`<div class="ph-body"><div class="center"><div style="font-size:42px">${si==2?'✅':si==1?'👨‍🍳':'📨'}</div><h3 style="margin:4px 0">Pesanan #${o.id}</h3>
+<p class="mut">${si==0?'Pesanan diterima kafe, menunggu diproses.':si==1?'Pesanan sedang disiapkan.':'Pesanan selesai! Selamat menikmati.'}</p></div>
+<div class="steps">${ST.map((s,i)=>`<div class="step ${i<=si?'done':''}"><i>${i<=si?'✓':i+1}</i>${s}</div>`).join('')}</div>
+${o.items.map(i=>`<div style="display:flex;justify-content:space-between"><span>${i.q}× ${esc(i.name)}</span><span>${rp(i.q*i.price)}</span></div>`).join('')}
+<hr style="border:0;border-top:1px solid var(--line)"><div style="display:flex;justify-content:space-between"><b>Total</b><b>${rp(o.total)}</b></div>
+<p class="mut">Tip: buka tab Dashboard dan ubah status untuk melihat update langsung di sini.</p></div>`;
+foot=`<div class="bar"><button class="p" style="width:100%;padding:12px" onclick="step='menu';cat='Semua';renderC()">Pesan lagi</button></div>`}
+p.innerHTML=h+foot}
+function chg(id,d){const m=find(id),q=(cart[id]||0)+d;if(q<0||q>m.stock)return;cart[id]=q;if(!q)delete cart[id];if(!cartQty()&&step=='cart')step='menu';renderC()}
+function submitOrder(){const items=cartList();if(!items.length)return;
+const n=document.getElementById('cn').value.trim(),x=document.getElementById('cx').value.trim();
+const o={id:S.seq++,table,name:n,note:x,status:ST[0],total:cartTotal(),time:new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}),
+items:items.map(i=>({name:i.m.name,price:i.m.price,q:i.q,mid:i.m.id}))};
+items.forEach(i=>{i.m.stock-=i.q});S.orders.push(o);save();myId=o.id;cart={};step='track';renderC();renderD();toast('Pesanan #'+o.id+' masuk ke dashboard')}
+
+/* ---------- DASHBOARD ---------- */
+function renderD(){const act=S.orders.filter(o=>o.status!=ST[2]).length;
+document.getElementById('badge').textContent=act?'('+act+')':'';
+document.getElementById('dtabs').innerHTML=[['orders','Pesanan'],['menu','Kelola Menu'],['sum','Ringkasan']].map(([k,l])=>`<button class="${dtab==k?'on':''}" onclick="dtab='${k}';renderD()">${l}</button>`).join('');
+const b=document.getElementById('dbody');
+if(dtab=='orders'){b.innerHTML=`<div class="cols">`+ST.map((s,i)=>{const L=S.orders.filter(o=>o.status==s).slice().reverse();
+return `<div class="col"><h4>${s}<span class="tag">${L.length}</span></h4>`+(L.length?L.map(o=>`<div class="ord s${i}"><div style="display:flex;justify-content:space-between"><b>#${o.id} • Meja ${o.table}</b><span class="mut">${o.time}</span></div>
+${o.name?`<div class="mut">${esc(o.name)}</div>`:''}${o.items.map(t=>`<div>${t.q}× ${esc(t.name)}</div>`).join('')}${o.note?`<div class="mut">📝 ${esc(o.note)}</div>`:''}
+<div style="margin:6px 0"><b>${rp(o.total)}</b></div>${i<2?`<button class="p" style="width:100%" onclick="adv(${o.id})">→ ${ST[i+1]}</button>`:''}</div>`).join(''):'<div class="mut">Kosong</div>')+'</div>'}).join('')+'</div>'}
+else if(dtab=='menu'){b.innerHTML=`<div class="scroll">`+S.menu.map(m=>`<div class="row"><span style="font-size:22px">${esc(m.em)}</span>
+<input value="${esc(m.name)}" onchange="upd(${m.id},'name',this.value)"><input type="number" min="0" step="500" value="${m.price}" onchange="upd(${m.id},'price',+this.value)">
+<input type="number" min="0" value="${m.stock}" onchange="upd(${m.id},'stock',+this.value)"><button onclick="del(${m.id})" title="Hapus">🗑</button></div>`).join('')+`</div>
+<p class="mut">Kolom: ikon • nama • harga • stok. Perubahan langsung tampil di menu pelanggan.</p>
+<h4>Tambah menu</h4><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px">
+<input id="an" placeholder="Nama menu"><input id="ap" type="number" placeholder="Harga"><input id="as" type="number" placeholder="Stok"><input id="ac" placeholder="Kategori" list="cl"><input id="ae" placeholder="Emoji" maxlength="4">
+<datalist id="cl">${[...new Set(S.menu.map(m=>m.cat))].map(c=>`<option value="${esc(c)}">`).join('')}</datalist><button class="p" onclick="addM()">Tambah</button></div>`}
+else{const done=S.orders.filter(o=>o.status==ST[2]),rev=S.orders.reduce((a,o)=>a+o.total,0),cnt={};
+S.orders.forEach(o=>o.items.forEach(i=>cnt[i.name]=(cnt[i.name]||0)+i.q));
+const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,5);
+b.innerHTML=`<div class="stats"><div class="stat">Total penjualan<b>${rp(rev)}</b></div><div class="stat">Jumlah pesanan<b>${S.orders.length}</b></div><div class="stat">Selesai<b>${done.length}</b></div>
+<div class="stat">Rata-rata order<b>${rp(S.orders.length?Math.round(rev/S.orders.length):0)}</b></div></div>
+<h4>Menu terlaris</h4>${top.length?`<table>${top.map(([n,q])=>`<tr><td>${esc(n)}</td><td>${q} terjual</td></tr>`).join('')}</table>`:'<p class="mut">Belum ada pesanan.</p>'}
+<h4>Riwayat</h4>${S.orders.length?`<div class="scroll"><table><tr><th>#</th><th>Meja</th><th>Jam</th><th>Total</th><th>Status</th></tr>${S.orders.slice().reverse().map(o=>`<tr><td>${o.id}</td><td>${o.table}</td><td>${o.time}</td><td>${rp(o.total)}</td><td>${o.status}</td></tr>`).join('')}</table></div>`:'<p class="mut">—</p>'}`}}
+function adv(id){const o=S.orders.find(x=>x.id==id),i=ST.indexOf(o.status);if(i<2){o.status=ST[i+1];save();renderD();renderC()}}
+function upd(id,k,v){const m=find(id);if(k=='name'&&!v.trim())return renderD();if(k!='name'&&(isNaN(v)||v<0))return renderD();m[k]=v;save();renderC();toast('Menu diperbarui')}
+function del(id){S.menu=S.menu.filter(m=>m.id!=id);delete cart[id];save();renderD();renderC()}
+function addM(){const n=an.value.trim(),p=+ap.value;if(!n||!p)return toast('Isi nama dan harga');
+S.menu.push({id:S.nid++,name:n,price:p,stock:+as.value||0,cat:ac.value.trim()||'Lainnya',em:ae.value.trim()||'🍽️'});save();renderD();renderC();toast('Menu ditambahkan')}
+function resetAll(){try{localStorage.removeItem('menova-sim')}catch(e){}S=JSON.parse(JSON.stringify(DEF));cart={};step='scan';myId=null;renderC();renderD();toast('Demo di-reset')}
+renderC();renderD();
+</script>
+</body>
+</html>
