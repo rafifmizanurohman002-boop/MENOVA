@@ -25,17 +25,18 @@ button.on{background:var(--pri);color:#fff}
 button:disabled{opacity:.4;cursor:not-allowed}
 main{display:grid;grid-template-columns:1fr;gap:18px;padding:14px;max-width:1280px;margin:0 auto}
 @media(min-width:900px){main{grid-template-columns:390px 1fr;align-items:start}.tabs{display:none}.pane{display:block!important}}
+@media(max-width:899px){main{padding:10px}.tabs{padding:8px 10px 0}.phone{min-height:430px;height:calc(100vh - 132px);height:calc(100dvh - 132px)}}
 .pane{display:none}.pane.show{display:block}
 .phone{background:var(--card);border:6px solid #122E2A;border-radius:30px;overflow:hidden;min-height:620px;display:flex;flex-direction:column;max-width:390px;margin:0 auto}
-.ph-top{background:#122E2A;color:#ECE4D6;padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
-.ph-body{padding:14px;flex:1;overflow:auto;max-height:640px}
-.cats{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px}
-.cats button{white-space:nowrap}
-.item{display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
-.em{font-size:30px;width:52px;height:52px;border-radius:12px;background:var(--soft);display:grid;place-items:center;flex:none}
-.item .t{flex:1;min-width:0}.item .t b{display:block}.mut{color:var(--mut);font-size:13px}
+.ph-top{background:#122E2A;color:#ECE4D6;padding:10px 12px;display:flex;justify-content:space-between;align-items:center}
+.ph-body{padding:8px 12px;flex:1;overflow:auto;max-height:640px;min-height:0}
+.cats{display:flex;gap:6px;overflow-x:auto;padding:4px 0 6px;position:sticky;top:-8px;background:var(--card);z-index:1}
+.cats button{white-space:nowrap;padding:7px 12px}
+.item{display:flex;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line)}
+.em{font-size:24px;width:40px;height:40px;border-radius:10px;background:var(--soft);display:grid;place-items:center;flex:none}
+.item .t{flex:1;min-width:0}.item .t b{display:block;font-size:14px}.mut{color:var(--mut);font-size:13px}
 .qty{display:flex;align-items:center;gap:8px}.qty button{padding:4px 11px}
-.bar{padding:12px 14px;border-top:1px solid var(--line)}
+.bar{padding:10px 12px;border-top:1px solid var(--line);position:sticky;bottom:0;background:var(--card);z-index:1}
 .center{text-align:center}
 .qr{width:190px;height:190px;margin:14px auto;padding:10px;background:#fff;border-radius:12px;display:block}
 .steps{display:flex;justify-content:space-between;margin:18px 0;position:relative}
