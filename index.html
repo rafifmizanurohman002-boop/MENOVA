@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Menova Simulator</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
 --bg:#ECE4D6;--card:#fff;--ink:#122E2A;--mut:#60706A;--pri:#16786C;--acc:#B84E1E;--line:#d9d0bf;--soft:#f6f1e8}
@@ -58,11 +59,12 @@ label{display:block;font-size:13px;color:var(--mut);margin:10px 0 4px}
 .toast.show{opacity:1}
 table{width:100%;border-collapse:collapse}td,th{text-align:left;padding:6px 4px;border-bottom:1px solid var(--line)}
 .scroll{overflow-x:auto}
+.conn{font-size:12px;opacity:.8}
 </style>
 </head>
 <body>
 <header><b>MENOVA</b><span>Simulator • Scan QR → Pesan → Dashboard</span>
-<span style="margin-left:auto"><button onclick="resetAll()" style="padding:6px 10px">Reset demo</button></span></header>
+<span style="margin-left:auto;display:flex;gap:8px;align-items:center"><span class="conn" id="conn">menghubungkan…</span><button onclick="resetAll()" style="padding:6px 10px">Reset demo</button></span></header>
 <div class="tabs"><button id="tc" class="on" onclick="pane('c')">📱 Pelanggan</button><button id="td" onclick="pane('d')">🧾 Dashboard <span id="badge"></span></button></div>
 <main>
 <section class="pane show" id="pc"><div class="phone" id="phone"></div></section>
@@ -70,10 +72,13 @@ table{width:100%;border-collapse:collapse}td,th{text-align:left;padding:6px 4px;
 </main>
 <div class="toast" id="toast"></div>
 <script>
+const SUPABASE_URL='https://etqjntpaiaxpdswmflif.supabase.co';
+const SUPABASE_KEY='sb_publishable_xBDxYjEr5IZX7DbMpNxelQ_z-K9M5hq';
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const ST=['Diterima','Diproses','Selesai'];
-const rp=n=>'Rp'+Number(n).toLocaleString('id-ID');
-const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const DEF={menu:[
+const rp=n=>'Rp'+Number(n||0).toLocaleString('id-ID');
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const SEED=[
 {id:1,name:'Espresso',cat:'Kopi',price:18000,stock:20,em:'☕'},
 {id:2,name:'Americano',cat:'Kopi',price:20000,stock:20,em:'☕'},
 {id:3,name:'Kopi Susu Gula Aren',cat:'Kopi',price:24000,stock:25,em:'🧋'},
@@ -83,37 +88,78 @@ const DEF={menu:[
 {id:7,name:'Coklat Panas',cat:'Non-Kopi',price:24000,stock:10,em:'🍫'},
 {id:8,name:'Roti Bakar',cat:'Makanan',price:20000,stock:12,em:'🍞'},
 {id:9,name:'Nasi Goreng',cat:'Makanan',price:32000,stock:10,em:'🍳'},
-{id:10,name:'Kentang Goreng',cat:'Makanan',price:22000,stock:3,em:'🍟'}],orders:[],seq:1,nid:11};
-let S=load();let cart={},table=5,step='scan',cat='Semua',myId=null,dtab='orders',pend='';
-function load(){try{const r=localStorage.getItem('menova-sim');if(r)return JSON.parse(r)}catch(e){}return JSON.parse(JSON.stringify(DEF))}
-function save(){try{localStorage.setItem('menova-sim',JSON.stringify(S))}catch(e){}}
+{id:10,name:'Kentang Goreng',cat:'Makanan',price:22000,stock:3,em:'🍟'}];
+let S={menu:[],orders:[]};
+let cart={},table=5,step='scan',cat='Semua',myId=null,dtab='orders';
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove('show'),2200)}
+function setConn(m){document.getElementById('conn').textContent=m}
 function pane(w){document.getElementById('pc').classList.toggle('show',w=='c');document.getElementById('pd').classList.toggle('show',w=='d');
 document.getElementById('tc').classList.toggle('on',w=='c');document.getElementById('td').classList.toggle('on',w=='d')}
+const normMenu=r=>({id:Number(r.id),name:r.name,cat:r.category??r.cat??'Lainnya',price:Number(r.price),stock:Number(r.stock),em:r.emoji??r.em??'🍽️'});
+function normOrderFn(o){
+  const items=(o.order_items||o.items||[]).map(i=>({name:i.name,price:Number(i.price),q:Number(i.qty??i.q),mid:i.menu_id??i.mid}));
+  let time=o.time;
+  if(!time&&o.created_at){try{time=new Date(o.created_at).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})}catch(e){time=''}}
+  return {id:o.id,table:o.table_number??o.table,name:o.customer_name??o.name??'',note:o.note??'',status:o.status,total:Number(o.total),time:time||'',items};
+}
 const find=id=>S.menu.find(m=>m.id==id);
-const cartList=()=>Object.entries(cart).filter(([,q])=>q>0).map(([id,q])=>({m:find(id),q}));
+const cartList=()=>Object.entries(cart).filter(([,q])=>q>0).map(([id,q])=>({m:find(id),q})).filter(x=>x.m);
 const cartTotal=()=>cartList().reduce((a,x)=>a+x.m.price*x.q,0);
 const cartQty=()=>cartList().reduce((a,x)=>a+x.q,0);
+function tableLink(t){try{const u=new URL(location.href);u.search='?table='+t;return u.toString()}catch(e){return '?table='+t}}
 
-/* ---------- QR (dekoratif) ---------- */
+/* ---------- QR (dekoratif + link asli) ---------- */
 function qrSvg(seed){let s=seed*9301+49297,n=21,c='';const r=()=>(s=(s*9301+49297)%233280)/233280;
 const fin=(x,y)=>(x<7&&y<7)||(x>13&&y<7)||(x<7&&y>13);
 for(let y=0;y<n;y++)for(let x=0;x<n;x++){let on;
-if(fin(x,y)){const lx=x%14,ly=y%14;const a=x>13?x-14:x,b=y>13?y-14:y;on=a==0||a==6||b==0||b==6||(a>=2&&a<=4&&b>=2&&b<=4)}
+if(fin(x,y)){const a=x>13?x-14:x,b=y>13?y-14:y;on=a==0||a==6||b==0||b==6||(a>=2&&a<=4&&b>=2&&b<=4)}
 else if((x==7||y==7||x==13&&y<8||y==13&&x<8)&&(x<8&&y<8||x>12&&y<8||x<8&&y>12))on=false;else on=r()>.5;
 if(on)c+=`<rect x="${x}" y="${y}" width="1" height="1"/>`}
 return `<svg class="qr" viewBox="-1 -1 23 23" fill="#122E2A" shape-rendering="crispEdges">${c}</svg>`}
+
+/* ---------- FETCH ---------- */
+async function fetchMenus(){
+  const {data,error}=await sb.from('menus').select('*').order('id');
+  if(error)throw error;
+  S.menu=(data||[]).map(normMenu);
+}
+async function fetchOrders(){
+  const {data,error}=await sb.from('orders').select('*,order_items(*)').order('created_at',{ascending:false}).limit(200);
+  if(error)throw error;
+  S.orders=(data||[]).map(normOrderFn);
+  if(myId!=null&&!S.orders.some(o=>String(o.id)===String(myId))){
+    const {data:one}=await sb.from('orders').select('*,order_items(*)').eq('id',myId).maybeSingle();
+    if(one&&!S.orders.some(o=>String(o.id)===String(one.id)))S.orders.unshift(normOrderFn(one));
+  }
+}
+async function fetchAll(){
+  setConn('memuat…');
+  await Promise.all([fetchMenus(),fetchOrders()]);
+  setConn('online • Supabase');
+  renderC();renderD();
+}
+function subscribe(){
+  sb.channel('menova')
+    .on('postgres_changes',{event:'*',schema:'public',table:'menus'},async()=>{try{await fetchMenus();renderC();renderD()}catch(e){}})
+    .on('postgres_changes',{event:'*',schema:'public',table:'orders'},async()=>{try{await fetchOrders();renderC();renderD()}catch(e){}})
+    .on('postgres_changes',{event:'*',schema:'public',table:'order_items'},async()=>{try{await fetchOrders();renderC();renderD()}catch(e){}})
+    .subscribe();
+}
 
 /* ---------- PELANGGAN ---------- */
 function renderC(){const p=document.getElementById('phone');let h='',foot='';
 const top=(t,back)=>`<div class="ph-top"><span>${back?`<button onclick="${back}" style="padding:2px 9px">←</button> `:''}<b>${t}</b></span><span class="mut" style="color:#ECE4D6">Meja ${table}</span></div>`;
 if(step=='scan'){
-h=top('Menova')+`<div class="ph-body center"><p class="mut" style="margin-top:20px">Simulasi: pelanggan duduk di meja dan scan QR</p>${qrSvg(table)}
-<label>Pilih meja (tiap meja punya QR unik)</label><select onchange="table=+this.value;renderC()">${[1,2,3,4,5,6,7,8].map(i=>`<option ${i==table?'selected':''} value="${i}">Meja ${i}</option>`).join('')}</select>
+const link=tableLink(table);
+h=top('Menova')+`<div class="ph-body center"><p class="mut" style="margin-top:20px">Pelanggan scan QR meja untuk pesan</p>${qrSvg(table)}
+<label>Pilih meja</label><select onchange="table=+this.value;renderC()">${[1,2,3,4,5,6,7,8].map(i=>`<option ${i==table?'selected':''} value="${i}">Meja ${i}</option>`).join('')}</select>
+<p class="mut" style="word-break:break-all">Link asli meja: <b>${esc(link)}</b></p>
+<p><button style="width:100%;padding:10px" onclick="navigator.clipboard&&navigator.clipboard.writeText('${esc(link)}').then(()=>toast('Link disalin'))">Salin link meja</button></p>
 <p><button class="p" style="width:100%;padding:13px" onclick="step='menu';renderC()">📷 Scan QR Meja ${table}</button></p></div>`}
 else if(step=='menu'){
+if(!S.menu.length){h=top('Kafe Menova','step=\'scan\';renderC()')+`<div class="ph-body"><p class="mut">Memuat menu…</p></div>`;p.innerHTML=h+foot;return}
 const cats=['Semua',...new Set(S.menu.map(m=>m.cat))];
-h=top('Kafe Menova','step=\'scan\';renderC()')+`<div class="ph-body"><div class="cats">${cats.map(c=>`<button class="${c==cat?'on':''}" onclick="cat='${c}';renderC()">${c}</button>`).join('')}</div>`+
+h=top('Kafe Menova','step=\'scan\';renderC()')+`<div class="ph-body"><div class="cats">${cats.map(c=>`<button class="${c==cat?'on':''}" onclick="cat='${c}';renderC()">${esc(c)}</button>`).join('')}</div>`+
 S.menu.filter(m=>cat=='Semua'||m.cat==cat).map(m=>{const q=cart[m.id]||0,left=m.stock-q;
 return `<div class="item"><div class="em">${esc(m.em)}</div><div class="t"><b>${esc(m.name)}</b><span class="mut">${rp(m.price)} • ${m.stock<=0?'Habis':'Stok '+m.stock}</span></div>
 <div class="qty">${q?`<button onclick="chg(${m.id},-1)">−</button><b>${q}</b>`:''}<button class="p" ${left<=0?'disabled':''} onclick="chg(${m.id},1)">+</button></div></div>`}).join('')+'</div>';
@@ -124,7 +170,7 @@ h=top('Keranjang',"step='menu';renderC()")+`<div class="ph-body">`+cartList().ma
 `<label>Nomor meja</label><select onchange="table=+this.value">${[1,2,3,4,5,6,7,8].map(i=>`<option ${i==table?'selected':''} value="${i}">Meja ${i}</option>`).join('')}</select>
 <label>Nama (opsional)</label><input id="cn" placeholder="Nama pemesan"><label>Catatan</label><input id="cx" placeholder="Contoh: less sugar"></div>`;
 foot=`<div class="bar"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><span>Total</span><b>${rp(cartTotal())}</b></div><button class="a" style="width:100%;padding:12px" onclick="submitOrder()">Kirim pesanan</button></div>`}
-else{const o=S.orders.find(x=>x.id==myId);
+else{const o=S.orders.find(x=>String(x.id)===String(myId));
 if(!o){step='menu';return renderC()}
 const si=ST.indexOf(o.status);
 h=top('Status pesanan')+`<div class="ph-body"><div class="center"><div style="font-size:42px">${si==2?'✅':si==1?'👨‍🍳':'📨'}</div><h3 style="margin:4px 0">Pesanan #${o.id}</h3>
@@ -132,46 +178,73 @@ h=top('Status pesanan')+`<div class="ph-body"><div class="center"><div style="fo
 <div class="steps">${ST.map((s,i)=>`<div class="step ${i<=si?'done':''}"><i>${i<=si?'✓':i+1}</i>${s}</div>`).join('')}</div>
 ${o.items.map(i=>`<div style="display:flex;justify-content:space-between"><span>${i.q}× ${esc(i.name)}</span><span>${rp(i.q*i.price)}</span></div>`).join('')}
 <hr style="border:0;border-top:1px solid var(--line)"><div style="display:flex;justify-content:space-between"><b>Total</b><b>${rp(o.total)}</b></div>
-<p class="mut">Tip: buka tab Dashboard dan ubah status untuk melihat update langsung di sini.</p></div>`;
+<p class="mut">Status update realtime dari dashboard.</p></div>`;
 foot=`<div class="bar"><button class="p" style="width:100%;padding:12px" onclick="step='menu';cat='Semua';renderC()">Pesan lagi</button></div>`}
 p.innerHTML=h+foot}
-function chg(id,d){const m=find(id),q=(cart[id]||0)+d;if(q<0||q>m.stock)return;cart[id]=q;if(!q)delete cart[id];if(!cartQty()&&step=='cart')step='menu';renderC()}
-function submitOrder(){const items=cartList();if(!items.length)return;
-const n=document.getElementById('cn').value.trim(),x=document.getElementById('cx').value.trim();
-const o={id:S.seq++,table,name:n,note:x,status:ST[0],total:cartTotal(),time:new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}),
-items:items.map(i=>({name:i.m.name,price:i.m.price,q:i.q,mid:i.m.id}))};
-items.forEach(i=>{i.m.stock-=i.q});S.orders.push(o);save();myId=o.id;cart={};step='track';renderC();renderD();toast('Pesanan #'+o.id+' masuk ke dashboard')}
+function chg(id,d){const m=find(id);if(!m)return;const q=(cart[id]||0)+d;if(q<0||q>m.stock)return;cart[id]=q;if(!q)delete cart[id];if(!cartQty()&&step=='cart')step='menu';renderC()}
+async function submitOrder(){const items=cartList();if(!items.length)return;
+const n=(document.getElementById('cn').value||'').trim(),x=(document.getElementById('cx').value||'').trim();
+const total=cartTotal();
+try{
+setConn('mengirim…');
+const {data:ord,error:e1}=await sb.from('orders').insert({table_number:table,customer_name:n,note:x,status:ST[0],total}).select().single();
+if(e1)throw e1;
+const rows=items.map(i=>({order_id:ord.id,menu_id:i.m.id,name:i.m.name,price:i.m.price,qty:i.q}));
+const {error:e2}=await sb.from('order_items').insert(rows);
+if(e2)throw e2;
+for(const i of items){await sb.from('menus').update({stock:Math.max(0,i.m.stock-i.q)}).eq('id',i.m.id)}
+myId=ord.id;cart={};step='track';
+await fetchAll();toast('Pesanan #'+ord.id+' masuk ke dashboard');
+}catch(e){toast('Gagal kirim: '+(e.message||e));setConn('online • Supabase')}}
 
 /* ---------- DASHBOARD ---------- */
 function renderD(){const act=S.orders.filter(o=>o.status!=ST[2]).length;
 document.getElementById('badge').textContent=act?'('+act+')':'';
 document.getElementById('dtabs').innerHTML=[['orders','Pesanan'],['menu','Kelola Menu'],['sum','Ringkasan']].map(([k,l])=>`<button class="${dtab==k?'on':''}" onclick="dtab='${k}';renderD()">${l}</button>`).join('');
 const b=document.getElementById('dbody');
-if(dtab=='orders'){b.innerHTML=`<div class="cols">`+ST.map((s,i)=>{const L=S.orders.filter(o=>o.status==s).slice().reverse();
-return `<div class="col"><h4>${s}<span class="tag">${L.length}</span></h4>`+(L.length?L.map(o=>`<div class="ord s${i}"><div style="display:flex;justify-content:space-between"><b>#${o.id} • Meja ${o.table}</b><span class="mut">${o.time}</span></div>
+if(dtab=='orders'){b.innerHTML=`<div class="cols">`+ST.map((s,i)=>{const L=S.orders.filter(o=>o.status==s);
+return `<div class="col"><h4>${s}<span class="tag">${L.length}</span></h4>`+(L.length?L.map(o=>`<div class="ord s${i}"><div style="display:flex;justify-content:space-between"><b>#${o.id} • Meja ${o.table}</b><span class="mut">${esc(o.time)}</span></div>
 ${o.name?`<div class="mut">${esc(o.name)}</div>`:''}${o.items.map(t=>`<div>${t.q}× ${esc(t.name)}</div>`).join('')}${o.note?`<div class="mut">📝 ${esc(o.note)}</div>`:''}
 <div style="margin:6px 0"><b>${rp(o.total)}</b></div>${i<2?`<button class="p" style="width:100%" onclick="adv(${o.id})">→ ${ST[i+1]}</button>`:''}</div>`).join(''):'<div class="mut">Kosong</div>')+'</div>'}).join('')+'</div>'}
 else if(dtab=='menu'){b.innerHTML=`<div class="scroll">`+S.menu.map(m=>`<div class="row"><span style="font-size:22px">${esc(m.em)}</span>
 <input value="${esc(m.name)}" onchange="upd(${m.id},'name',this.value)"><input type="number" min="0" step="500" value="${m.price}" onchange="upd(${m.id},'price',+this.value)">
 <input type="number" min="0" value="${m.stock}" onchange="upd(${m.id},'stock',+this.value)"><button onclick="del(${m.id})" title="Hapus">🗑</button></div>`).join('')+`</div>
-<p class="mut">Kolom: ikon • nama • harga • stok. Perubahan langsung tampil di menu pelanggan.</p>
+<p class="mut">Perubahan tersimpan ke Supabase dan tampil realtime di semua device.</p>
 <h4>Tambah menu</h4><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px">
 <input id="an" placeholder="Nama menu"><input id="ap" type="number" placeholder="Harga"><input id="as" type="number" placeholder="Stok"><input id="ac" placeholder="Kategori" list="cl"><input id="ae" placeholder="Emoji" maxlength="4">
 <datalist id="cl">${[...new Set(S.menu.map(m=>m.cat))].map(c=>`<option value="${esc(c)}">`).join('')}</datalist><button class="p" onclick="addM()">Tambah</button></div>`}
-else{const done=S.orders.filter(o=>o.status==ST[2]),rev=S.orders.reduce((a,o)=>a+o.total,0),cnt={};
+else{const done=S.orders.filter(o=>o.status==ST[2]),rev=S.orders.reduce((a,o)=>a+Number(o.total||0),0),cnt={};
 S.orders.forEach(o=>o.items.forEach(i=>cnt[i.name]=(cnt[i.name]||0)+i.q));
 const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,5);
 b.innerHTML=`<div class="stats"><div class="stat">Total penjualan<b>${rp(rev)}</b></div><div class="stat">Jumlah pesanan<b>${S.orders.length}</b></div><div class="stat">Selesai<b>${done.length}</b></div>
 <div class="stat">Rata-rata order<b>${rp(S.orders.length?Math.round(rev/S.orders.length):0)}</b></div></div>
 <h4>Menu terlaris</h4>${top.length?`<table>${top.map(([n,q])=>`<tr><td>${esc(n)}</td><td>${q} terjual</td></tr>`).join('')}</table>`:'<p class="mut">Belum ada pesanan.</p>'}
-<h4>Riwayat</h4>${S.orders.length?`<div class="scroll"><table><tr><th>#</th><th>Meja</th><th>Jam</th><th>Total</th><th>Status</th></tr>${S.orders.slice().reverse().map(o=>`<tr><td>${o.id}</td><td>${o.table}</td><td>${o.time}</td><td>${rp(o.total)}</td><td>${o.status}</td></tr>`).join('')}</table></div>`:'<p class="mut">—</p>'}`}}
-function adv(id){const o=S.orders.find(x=>x.id==id),i=ST.indexOf(o.status);if(i<2){o.status=ST[i+1];save();renderD();renderC()}}
-function upd(id,k,v){const m=find(id);if(k=='name'&&!v.trim())return renderD();if(k!='name'&&(isNaN(v)||v<0))return renderD();m[k]=v;save();renderC();toast('Menu diperbarui')}
-function del(id){S.menu=S.menu.filter(m=>m.id!=id);delete cart[id];save();renderD();renderC()}
-function addM(){const n=an.value.trim(),p=+ap.value;if(!n||!p)return toast('Isi nama dan harga');
-S.menu.push({id:S.nid++,name:n,price:p,stock:+as.value||0,cat:ac.value.trim()||'Lainnya',em:ae.value.trim()||'🍽️'});save();renderD();renderC();toast('Menu ditambahkan')}
-function resetAll(){try{localStorage.removeItem('menova-sim')}catch(e){}S=JSON.parse(JSON.stringify(DEF));cart={};step='scan';myId=null;renderC();renderD();toast('Demo di-reset')}
-renderC();renderD();
+<h4>Riwayat</h4>${S.orders.length?`<div class="scroll"><table><tr><th>#</th><th>Meja</th><th>Jam</th><th>Total</th><th>Status</th></tr>${S.orders.map(o=>`<tr><td>${o.id}</td><td>${o.table}</td><td>${esc(o.time)}</td><td>${rp(o.total)}</td><td>${o.status}</td></tr>`).join('')}</table></div>`:'<p class="mut">—</p>'}`}}
+async function adv(id){try{const o=S.orders.find(x=>String(x.id)===String(id));if(!o)return;const i=ST.indexOf(o.status);if(i<0||i>=2)return;
+const {error}=await sb.from('orders').update({status:ST[i+1]}).eq('id',id);if(error)throw error;
+await fetchOrders();renderD();renderC()}catch(e){toast('Gagal update: '+(e.message||e))}}
+async function upd(id,k,v){
+try{
+if(k=='name'&&!String(v).trim())return renderD();
+if(k!='name'&&(isNaN(v)||v<0))return renderD();
+const patch=k=='name'?{name:String(v)}:k=='price'?{price:Number(v)}:{stock:Number(v)};
+const {error}=await sb.from('menus').update(patch).eq('id',id);if(error)throw error;
+toast('Menu diperbarui')}catch(e){toast('Gagal: '+(e.message||e))}}
+async function del(id){try{const {error}=await sb.from('menus').delete().eq('id',id);if(error)throw error;delete cart[id]}catch(e){toast('Gagal hapus: '+(e.message||e))}}
+async function addM(){const n=document.getElementById('an').value.trim(),p=+document.getElementById('ap').value;if(!n||!p)return toast('Isi nama dan harga');
+try{const nid=S.menu.reduce((a,m)=>Math.max(a,m.id),10)+1;
+const {error}=await sb.from('menus').insert({id:nid,name:n,price:p,stock:+document.getElementById('as').value||0,category:document.getElementById('ac').value.trim()||'Lainnya',emoji:document.getElementById('ae').value.trim()||'🍽️'});
+if(error)throw error;toast('Menu ditambahkan')}catch(e){toast('Gagal tambah: '+(e.message||e))}}
+async function resetAll(){if(!confirm('Hapus semua pesanan dan kembalikan stok awal?'))return;
+try{setConn('reset…');
+await sb.from('order_items').delete().neq('id',0);
+await sb.from('orders').delete().neq('id',0);
+for(const m of SEED){await sb.from('menus').upsert({id:m.id,name:m.name,category:m.cat,price:m.price,stock:m.stock,emoji:m.em})}
+cart={};step='scan';myId=null;await fetchAll();toast('Demo di-reset')}catch(e){toast('Gagal reset: '+(e.message||e))}}
+(function init(){
+try{const q=new URLSearchParams(location.search);const t=Number(q.get('table'));if(t>=1&&t<=8){table=t;step='menu'}}catch(e){}
+renderC();renderD();subscribe();fetchAll().catch(e=>{setConn('offline: '+(e.message||e));toast('Gagal konek Supabase: '+(e.message||e))});
+})();
 </script>
 </body>
 </html>
