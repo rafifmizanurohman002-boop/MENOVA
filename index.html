@@ -6,34 +6,35 @@
 <title>Menova Simulator</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Karla:wght@400;600;700;800&family=Playfair+Display+SC:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 :root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
---bg:#EFE5D0;--bg2:#E2D3B4;--card:#FFFDF7;--ink:#1C2B25;--mut:#7D867D;--pri:#0E7A67;--pri-deep:#0A4A3F;--acc:#C2571B;--gold:#C9A227;--line:#E0D2B6;--soft:#F8F0DF;--pri-soft:#DCEEE9;--danger:#A4331F;--danger-soft:#F6D9D4;
+--bg:#F6ECD9;--bg2:#EEDCB9;--card:#FFFDF8;--ink:#4A2A12;--mut:#8A7560;--pri:#92400E;--pri-deep:#78350F;--acc:#B45309;--gold:#C9A227;--line:#E7D3AC;--soft:#FAF3E3;--pri-soft:#F3E2C7;--danger:#B3261E;--danger-soft:#F6D9D4;--ok:#15803D;--ok-deep:#166534;--ok-soft:#DCFCE7;
 --sh-sm:0 1px 2px rgba(28,43,37,.08),0 3px 10px rgba(28,43,37,.06);
 --sh-md:0 2px 6px rgba(28,43,37,.08),0 14px 30px -14px rgba(28,43,37,.28);
 --sh-lg:0 30px 60px -22px rgba(10,45,38,.4);
 --r:18px;--r-sm:12px}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0B1714;--bg2:#10211C;--card:#142825;--ink:#F1E9D6;--mut:#96A49B;--pri:#2FB3A0;--pri-deep:#0D5C50;--acc:#E8834A;--gold:#D9B64A;--line:#26433C;--soft:#1A332D;--pri-soft:#173F37;--danger:#F0917F;--danger-soft:#40211A;--sh-sm:0 1px 2px rgba(0,0,0,.45);--sh-md:0 2px 6px rgba(0,0,0,.45),0 14px 30px -14px rgba(0,0,0,.7);--sh-lg:0 30px 60px -22px rgba(0,0,0,.75)}}
-:root[data-theme="dark"]{--bg:#0B1714;--bg2:#10211C;--card:#142825;--ink:#F1E9D6;--mut:#96A49B;--pri:#2FB3A0;--pri-deep:#0D5C50;--acc:#E8834A;--gold:#D9B64A;--line:#26433C;--soft:#1A332D;--pri-soft:#173F37;--danger:#F0917F;--danger-soft:#40211A;--sh-sm:0 1px 2px rgba(0,0,0,.45);--sh-md:0 2px 6px rgba(0,0,0,.45),0 14px 30px -14px rgba(0,0,0,.7);--sh-lg:0 30px 60px -22px rgba(0,0,0,.75)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17100B;--bg2:#1F150E;--card:#221710;--ink:#F5E8D3;--mut:#A89880;--pri:#D18A36;--pri-deep:#92400E;--acc:#E8A04C;--gold:#D9B64A;--line:#3A2A1A;--soft:#2A1E12;--pri-soft:#3A2A16;--danger:#F0917F;--danger-soft:#40211A;--ok:#4ADE80;--ok-deep:#16A34A;--ok-soft:#123A24;--sh-sm:0 1px 2px rgba(0,0,0,.45);--sh-md:0 2px 6px rgba(0,0,0,.45),0 14px 30px -14px rgba(0,0,0,.7);--sh-lg:0 30px 60px -22px rgba(0,0,0,.75)}}
+:root[data-theme="dark"]{--bg:#17100B;--bg2:#1F150E;--card:#221710;--ink:#F5E8D3;--mut:#A89880;--pri:#D18A36;--pri-deep:#92400E;--acc:#E8A04C;--gold:#D9B64A;--line:#3A2A1A;--soft:#2A1E12;--pri-soft:#3A2A16;--danger:#F0917F;--danger-soft:#40211A;--ok:#4ADE80;--ok-deep:#16A34A;--ok-soft:#123A24;--sh-sm:0 1px 2px rgba(0,0,0,.45);--sh-md:0 2px 6px rgba(0,0,0,.45),0 14px 30px -14px rgba(0,0,0,.7);--sh-lg:0 30px 60px -22px rgba(0,0,0,.75)}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *,*:before,*:after{box-sizing:inherit}
-body{margin:0;color:var(--ink);font:15px/1.55 "Plus Jakarta Sans",Calibri,Arial,system-ui,sans-serif;background-color:var(--bg);background-image:radial-gradient(1100px 480px at 50% -8%,var(--bg2),transparent),radial-gradient(700px 380px at 100% 0%,var(--pri-soft),transparent)}
-h3,h4{font-family:Fraunces,Georgia,serif;letter-spacing:.2px}
-header{display:flex;align-items:center;gap:10px;padding:12px 20px;background:linear-gradient(120deg,#0B2A24,#11453A 55%,#0E6A58);color:#F2EAD8;box-shadow:var(--sh-md);position:sticky;top:0;z-index:5;border-bottom:2px solid var(--gold)}
-.brandmark{width:36px;height:36px;flex:none;border-radius:11px;background:linear-gradient(135deg,#E8C84A,var(--gold) 60%,#8A6D1C);display:grid;place-items:center;font-family:Fraunces,Georgia,serif;font-weight:700;font-size:20px;color:#241A05;box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 4px 10px rgba(0,0,0,.3)}
-header b{font-family:Fraunces,Georgia,serif;font-size:21px;letter-spacing:3px}header span{opacity:.8;font-size:13px}
+body{margin:0;color:var(--ink);font:15px/1.55 Karla,Calibri,Arial,system-ui,sans-serif;background-color:var(--bg);background-image:radial-gradient(1100px 480px at 50% -8%,var(--bg2),transparent),radial-gradient(700px 380px at 100% 0%,var(--pri-soft),transparent)}
+h3,h4{font-family:"Playfair Display SC",Georgia,serif;letter-spacing:.2px}
+header{display:flex;align-items:center;gap:10px;padding:12px 20px;background:linear-gradient(120deg,#221206,#4A2A12 55%,#6B3F14);color:#F2EAD8;box-shadow:var(--sh-md);position:sticky;top:0;z-index:5;border-bottom:2px solid var(--gold)}
+.brandmark{width:36px;height:36px;flex:none;border-radius:11px;background:linear-gradient(135deg,#E8C84A,var(--gold) 60%,#8A6D1C);display:grid;place-items:center;font-family:"Playfair Display SC",Georgia,serif;font-weight:700;font-size:20px;color:#241A05;box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 4px 10px rgba(0,0,0,.3)}
+header b{font-family:"Playfair Display SC",Georgia,serif;font-size:21px;letter-spacing:3px}header span{opacity:.8;font-size:13px}
 .conn{font-size:11px;font-weight:700;background:rgba(255,255,255,.15);padding:4px 11px;border-radius:99px;opacity:1}
 .tabs{display:flex;gap:4px;padding:10px 14px 0;max-width:480px;margin:0 auto}
 .tabs button{flex:1;border-radius:14px}
-button{font:700 14px/1 "Plus Jakarta Sans",Calibri,Arial,sans-serif;cursor:pointer;border:1px solid transparent;border-radius:999px;padding:10px 16px;background:var(--soft);color:var(--ink);transition:transform .12s ease,box-shadow .2s ease,background .2s ease}
+button{font:700 14px/1 Karla,Calibri,Arial,sans-serif;cursor:pointer;border:1px solid transparent;border-radius:999px;padding:10px 16px;background:var(--soft);color:var(--ink);transition:transform .12s ease,box-shadow .2s ease,background .2s ease}
 button:hover{transform:translateY(-1px);box-shadow:var(--sh-sm)}
 button:active{transform:translateY(0) scale(.98)}
-button.p{background:linear-gradient(135deg,var(--pri),var(--pri-deep));color:#fff;box-shadow:0 10px 20px -10px rgba(14,122,103,.8)}
-button.a{background:linear-gradient(135deg,#DB6E2B,var(--acc));color:#fff;box-shadow:0 10px 20px -10px rgba(194,87,27,.8)}
-button.on{background:linear-gradient(135deg,var(--pri),var(--pri-deep));color:#fff;border-color:transparent;box-shadow:0 8px 16px -8px rgba(14,122,103,.7)}
+button.p{background:linear-gradient(135deg,var(--pri),var(--pri-deep));color:#fff;box-shadow:0 10px 20px -10px rgba(146,64,14,.8)}
+button.a{background:linear-gradient(135deg,#D99A3D,var(--acc));color:#fff;box-shadow:0 10px 20px -10px rgba(180,83,9,.8)}
+button.on{background:linear-gradient(135deg,var(--pri),var(--pri-deep));color:#fff;border-color:transparent;box-shadow:0 8px 16px -8px rgba(146,64,14,.7)}
+button.ok{background:linear-gradient(135deg,var(--ok),var(--ok-deep));color:#fff;box-shadow:0 10px 20px -10px rgba(22,101,52,.8)}
 button:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
 button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 main{display:grid;grid-template-columns:1fr;gap:18px;padding:14px;max-width:1280px;margin:0 auto}
@@ -41,8 +42,8 @@ main{display:grid;grid-template-columns:1fr;gap:18px;padding:14px;max-width:1280
 @media(max-width:899px){main{padding:10px}.tabs{padding:8px 10px 0}.phone{min-height:430px;height:calc(100vh - 132px);height:calc(100dvh - 132px)}}
 .pane{display:none}.pane.show{display:block}
 .phone{background:var(--card);border:1px solid var(--line);border-radius:28px;overflow:hidden;min-height:620px;display:flex;flex-direction:column;max-width:390px;margin:6px auto;box-shadow:var(--sh-lg)}
-.ph-top{background:linear-gradient(120deg,#0B2A24,#11453A 60%,#0E6A58);color:#F2EAD8;padding:12px 14px;display:flex;justify-content:space-between;align-items:center}
-.ph-top b{font-family:Fraunces,Georgia,serif;letter-spacing:.5px;font-size:16px}
+.ph-top{background:linear-gradient(120deg,#221206,#4A2A12 60%,#6B3F14);color:#F2EAD8;padding:12px 14px;display:flex;justify-content:space-between;align-items:center}
+.ph-top b{font-family:"Playfair Display SC",Georgia,serif;letter-spacing:.5px;font-size:16px}
 .ph-body{padding:10px 12px 14px;flex:1;overflow:auto;max-height:640px;min-height:0}
 .ph-body::-webkit-scrollbar{width:8px}
 .ph-body::-webkit-scrollbar-thumb{background:var(--line);border-radius:99px}
@@ -64,8 +65,8 @@ main{display:grid;grid-template-columns:1fr;gap:18px;padding:14px;max-width:1280
 .steps::before{content:"";position:absolute;top:15px;left:14%;right:14%;height:2px;background:var(--line)}
 .step{flex:1;text-align:center;font-size:12px;color:var(--mut);position:relative;z-index:1}
 .step i{display:grid;place-items:center;width:32px;height:32px;border-radius:50%;margin:0 auto 4px;background:var(--card);border:2px solid var(--line);font-style:normal;font-weight:800}
-.step.done{color:var(--ink)}.step.done i{background:linear-gradient(135deg,var(--pri),var(--pri-deep));border-color:transparent;color:#fff;box-shadow:0 6px 12px -6px rgba(14,122,103,.8)}
-input,select{font:600 14px "Plus Jakarta Sans",Calibri,Arial,sans-serif;width:100%;padding:10px 12px;border-radius:12px;border:1.5px solid var(--line);background:var(--soft);color:var(--ink);transition:border-color .2s,box-shadow .2s}
+.step.done{color:var(--ink)}.step.done i{background:linear-gradient(135deg,var(--ok),var(--ok-deep));border-color:transparent;color:#fff;box-shadow:0 6px 12px -6px rgba(22,101,52,.8)}
+input,select{font:600 14px Karla,Calibri,Arial,sans-serif;width:100%;padding:10px 12px;border-radius:12px;border:1.5px solid var(--line);background:var(--soft);color:var(--ink);transition:border-color .2s,box-shadow .2s}
 input:focus,select:focus{outline:none;border-color:var(--pri);box-shadow:0 0 0 3px var(--pri-soft)}
 label{display:block;font-size:12px;font-weight:700;color:var(--mut);margin:12px 0 5px;text-transform:uppercase;letter-spacing:.5px}
 .dash{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:18px;box-shadow:var(--sh-md)}
@@ -81,7 +82,12 @@ label{display:block;font-size:12px;font-weight:700;color:var(--mut);margin:12px 
 .row input{padding:7px 9px}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px}
 .stat{background:linear-gradient(135deg,var(--pri-deep),var(--pri));border-radius:var(--r);padding:16px;color:rgba(255,255,255,.85);font-size:12px;font-weight:700;border:none;box-shadow:var(--sh-md)}
-.stat b{font-size:24px;display:block;color:#fff;font-family:Fraunces,Georgia,serif}
+.stat b{font-size:24px;display:block;color:#fff;font-family:"Playfair Display SC",Georgia,serif}
+.payst{display:inline-block;font-size:11px;font-weight:800;padding:3px 10px;border-radius:99px;background:var(--soft);color:var(--mut);border:1px solid var(--line)}
+.payst.belum_bayar{background:var(--soft);color:var(--mut)}
+.payst.menunggu_verifikasi{background:#F8E3C2;color:#92400E;border-color:#E7C48A}
+.payst.lunas{background:var(--ok-soft);color:var(--ok-deep);border-color:transparent}
+.payst.ditolak{background:var(--danger-soft);color:var(--danger);border-color:transparent}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#0D211C;color:#F2EAD8;padding:12px 20px;border-radius:16px;border:1px solid rgba(201,162,39,.45);box-shadow:var(--sh-lg);opacity:0;transition:.3s;pointer-events:none;z-index:9;font-weight:600}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
 table{width:100%;border-collapse:collapse}td,th{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);font-size:13px}
@@ -265,7 +271,7 @@ return `<div class="col"><h4>${s}<span class="tag">${L.length}</span></h4>`+(L.l
 ${o.name?`<div class="mut">${esc(o.name)}</div>`:''}${o.items.map(t=>`<div>${t.q}× ${esc(t.name)}</div>`).join('')}${o.note?`<div class="mut">📝 ${esc(o.note)}</div>`:''}
 <div style="margin:6px 0"><b>${rp(o.total)}</b></div>${i<2?`<button class="p" style="width:100%" onclick="adv(${o.id})">→ ${ST[i+1]}</button>`:''}</div>`).join(''):'<div class="mut">Kosong</div>')+'</div>'}).join('')+'</div>'}
 else if(dtab=='pay'){const W=S.orders.filter(o=>o.payst=='belum_bayar'||o.payst=='menunggu_verifikasi');const R=S.orders.filter(o=>o.payst=='ditolak').slice(0,10);
-b.innerHTML=(W.length?W.map(o=>`<div class="ord s0"><div style="display:flex;justify-content:space-between"><b>#${o.id} • Meja ${o.table}</b><span class="mut">${esc(o.time)}</span></div><div><span class="tag">${o.pay=='qris'?'QRIS':'Tunai'}</span> <span class="mut">${PAYST[o.payst]||o.payst}</span></div>${o.name?`<div class="mut">${esc(o.name)}</div>`:''}${o.items.map(t=>`<div>${t.q}× ${esc(t.name)}</div>`).join('')}${o.note?`<div class="mut">📝 ${esc(o.note)}</div>`:''}<div style="margin:6px 0"><b>${rp(o.total)}</b></div>${o.proof?`<p><a href="${esc(o.proof)}" target="_blank">Lihat bukti transfer</a></p>`:''}<div style="display:flex;gap:6px"><button class="p" style="flex:1" onclick="confirmPaid(${o.id})">Konfirmasi Lunas</button><button style="flex:1" onclick="rejectOrder(${o.id})">Tolak</button></div></div>`).join(''):'<p class="mut">Tidak ada pembayaran menunggu.</p>')+(R.length?`<h4>Ditolak</h4>`+R.map(o=>`<div class="mut">#${o.id} • Meja ${o.table} • ${rp(o.total)}</div>`).join(''):'')}
+b.innerHTML=(W.length?W.map(o=>`<div class="ord s0"><div style="display:flex;justify-content:space-between"><b>#${o.id} • Meja ${o.table}</b><span class="mut">${esc(o.time)}</span></div><div><span class="tag">${o.pay=='qris'?'QRIS':'Tunai'}</span><span class="payst ${o.payst}">${PAYST[o.payst]||o.payst}</span></div>${o.name?`<div class="mut">${esc(o.name)}</div>`:''}${o.items.map(t=>`<div>${t.q}× ${esc(t.name)}</div>`).join('')}${o.note?`<div class="mut">📝 ${esc(o.note)}</div>`:''}<div style="margin:6px 0"><b>${rp(o.total)}</b></div>${o.proof?`<p><a href="${esc(o.proof)}" target="_blank">Lihat bukti transfer</a></p>`:''}<div style="display:flex;gap:6px"><button class="ok" style="flex:1" onclick="confirmPaid(${o.id})">Konfirmasi Lunas</button><button style="flex:1" onclick="rejectOrder(${o.id})">Tolak</button></div></div>`).join(''):'<p class="mut">Tidak ada pembayaran menunggu.</p>')+(R.length?`<h4>Ditolak</h4>`+R.map(o=>`<div class="mut">#${o.id} • Meja ${o.table} • ${rp(o.total)}</div>`).join(''):'')}
 else if(dtab=='menu'){b.innerHTML=`<div class="scroll">`+S.menu.map(m=>`<div class="row"><span style="font-size:22px">${esc(m.em)}</span>
 <input value="${esc(m.name)}" onchange="upd(${m.id},'name',this.value)"><input type="number" min="0" step="500" value="${m.price}" onchange="upd(${m.id},'price',+this.value)">
 <input type="number" min="0" value="${m.stock}" onchange="upd(${m.id},'stock',+this.value)"><button onclick="del(${m.id})" title="Hapus">🗑</button></div>`).join('')+`</div>
@@ -279,7 +285,7 @@ const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,5);
 b.innerHTML=`<div class="stats"><div class="stat">Total penjualan<b>${rp(rev)}</b></div><div class="stat">Jumlah pesanan<b>${S.orders.length}</b></div><div class="stat">Selesai<b>${done.length}</b></div>
 <div class="stat">Rata-rata order<b>${rp(S.orders.length?Math.round(rev/S.orders.length):0)}</b></div></div>
 <h4>Menu terlaris</h4>${top.length?`<table>${top.map(([n,q])=>`<tr><td>${esc(n)}</td><td>${q} terjual</td></tr>`).join('')}</table>`:'<p class="mut">Belum ada pesanan.</p>'}
-<h4>Riwayat</h4>${S.orders.length?`<div class="scroll"><table><tr><th>#</th><th>Meja</th><th>Jam</th><th>Total</th><th>Bayar</th><th>Status</th></tr>${S.orders.map(o=>`<tr><td>${o.id}</td><td>${o.table}</td><td>${esc(o.time)}</td><td>${rp(o.total)}</td><td>${PAYST[o.payst]||o.payst}</td><td>${o.status}</td></tr>`).join('')}</table></div>`:'<p class="mut">—</p>'}`}}
+<h4>Riwayat</h4>${S.orders.length?`<div class="scroll"><table><tr><th>#</th><th>Meja</th><th>Jam</th><th>Total</th><th>Bayar</th><th>Status</th></tr>${S.orders.map(o=>`<tr><td>${o.id}</td><td>${o.table}</td><td>${esc(o.time)}</td><td>${rp(o.total)}</td><td><span class="payst ${o.payst}">${PAYST[o.payst]||o.payst}</span></td><td>${o.status}</td></tr>`).join('')}</table></div>`:'<p class="mut">—</p>'}`}}
 async function adv(id){try{const o=S.orders.find(x=>String(x.id)===String(id));if(!o)return;const i=ST.indexOf(o.status);if(i<0||i>=2)return;
 const {error}=await sb.from('orders').update({status:ST[i+1]}).eq('id',id);if(error)throw error;
 await fetchOrders();renderD();renderC()}catch(e){toast('Gagal update: '+(e.message||e))}}
