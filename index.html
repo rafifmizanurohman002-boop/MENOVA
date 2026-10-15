@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Menova Simulator</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 :root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
 --bg:#ECE4D6;--card:#fff;--ink:#122E2A;--mut:#60706A;--pri:#16786C;--acc:#B84E1E;--line:#d9d0bf;--soft:#f6f1e8}
@@ -60,12 +61,18 @@ label{display:block;font-size:13px;color:var(--mut);margin:10px 0 4px}
 table{width:100%;border-collapse:collapse}td,th{text-align:left;padding:6px 4px;border-bottom:1px solid var(--line)}
 .scroll{overflow-x:auto}
 .conn{font-size:12px;opacity:.8}
+.qrbox{width:210px;height:210px;margin:14px auto;padding:10px;background:#fff;border-radius:12px;display:grid;place-items:center}
+.qrbox img,.qrbox canvas{display:block!important;width:190px!important;height:190px!important}
+body.kiosk .tabs{display:none!important}
+body.kiosk #pd{display:none!important}
+body.kiosk main{grid-template-columns:1fr!important;max-width:480px}
+body.kiosk .pane{display:none}body.kiosk #pc{display:block!important}
 </style>
 </head>
 <body>
-<header><b>MENOVA</b><span>Simulator • Scan QR → Pesan → Dashboard</span>
-<span style="margin-left:auto;display:flex;gap:8px;align-items:center"><span class="conn" id="conn">menghubungkan…</span><button onclick="resetAll()" style="padding:6px 10px">Reset demo</button></span></header>
-<div class="tabs"><button id="tc" class="on" onclick="pane('c')">📱 Pelanggan</button><button id="td" onclick="pane('d')">🧾 Dashboard <span id="badge"></span></button></div>
+<header><b>MENOVA</b><span id="hsub">Simulator • Scan QR → Pesan → Dashboard</span>
+<span id="hact" style="margin-left:auto;display:flex;gap:8px;align-items:center"><span class="conn" id="conn">menghubungkan…</span><button onclick="resetAll()" style="padding:6px 10px">Reset demo</button></span></header>
+<div class="tabs" id="tabs"><button id="tc" class="on" onclick="pane('c')">📱 Pelanggan</button><button id="td" onclick="pane('d')">🧾 Dashboard <span id="badge"></span></button></div>
 <main>
 <section class="pane show" id="pc"><div class="phone" id="phone"></div></section>
 <section class="pane" id="pd"><div class="dash"><div class="dtabs" id="dtabs"></div><div id="dbody"></div></div></section>
@@ -93,8 +100,9 @@ let S={menu:[],orders:[]};
 let cart={},table=5,step='scan',cat='Semua',myId=null,dtab='orders';
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove('show'),2200)}
 function setConn(m){document.getElementById('conn').textContent=m}
-function pane(w){document.getElementById('pc').classList.toggle('show',w=='c');document.getElementById('pd').classList.toggle('show',w=='d');
-document.getElementById('tc').classList.toggle('on',w=='c');document.getElementById('td').classList.toggle('on',w=='d')}
+function pane(w){if(isKiosk())w='c';document.getElementById('pc').classList.toggle('show',w=='c');document.getElementById('pd').classList.toggle('show',w=='d');
+const tc=document.getElementById('tc'),td=document.getElementById('td');
+if(tc)tc.classList.toggle('on',w=='c');if(td)td.classList.toggle('on',w=='d')}
 const normMenu=r=>({id:Number(r.id),name:r.name,cat:r.category??r.cat??'Lainnya',price:Number(r.price),stock:Number(r.stock),em:r.emoji??r.em??'🍽️'});
 function normOrderFn(o){
   const items=(o.order_items||o.items||[]).map(i=>({name:i.name,price:Number(i.price),q:Number(i.qty??i.q),mid:i.menu_id??i.mid}));
@@ -107,15 +115,17 @@ const cartList=()=>Object.entries(cart).filter(([,q])=>q>0).map(([id,q])=>({m:fi
 const cartTotal=()=>cartList().reduce((a,x)=>a+x.m.price*x.q,0);
 const cartQty=()=>cartList().reduce((a,x)=>a+x.q,0);
 function tableLink(t){try{const u=new URL(location.href);u.search='?table='+t;return u.toString()}catch(e){return '?table='+t}}
+function isKiosk(){try{const t=Number(new URLSearchParams(location.search).get('table'));return t>=1&&t<=8}catch(e){return false}}
+function applyKiosk(){if(!isKiosk())return;document.body.classList.add('kiosk');
+const tb=document.getElementById('tabs');if(tb)tb.style.display='none';
+const pd=document.getElementById('pd');if(pd)pd.style.display='none';
+const ha=document.getElementById('hact');if(ha)ha.style.display='none';
+const hs=document.getElementById('hsub');if(hs)hs.textContent='Scan QR → Pesan';pane('c')}
 
-/* ---------- QR (dekoratif + link asli) ---------- */
-function qrSvg(seed){let s=seed*9301+49297,n=21,c='';const r=()=>(s=(s*9301+49297)%233280)/233280;
-const fin=(x,y)=>(x<7&&y<7)||(x>13&&y<7)||(x<7&&y>13);
-for(let y=0;y<n;y++)for(let x=0;x<n;x++){let on;
-if(fin(x,y)){const a=x>13?x-14:x,b=y>13?y-14:y;on=a==0||a==6||b==0||b==6||(a>=2&&a<=4&&b>=2&&b<=4)}
-else if((x==7||y==7||x==13&&y<8||y==13&&x<8)&&(x<8&&y<8||x>12&&y<8||x<8&&y>12))on=false;else on=r()>.5;
-if(on)c+=`<rect x="${x}" y="${y}" width="1" height="1"/>`}
-return `<svg class="qr" viewBox="-1 -1 23 23" fill="#122E2A" shape-rendering="crispEdges">${c}</svg>`}
+/* ---------- QR asli (bisa di-scan) ---------- */
+function drawQR(elId,text){const el=document.getElementById(elId);if(!el)return;el.innerHTML='';
+if(window.QRCode){new QRCode(el,{text,width:190,height:190,correctLevel:QRCode.CorrectLevel.M})}
+else{el.innerHTML=`<p class="mut">QR lib gagal dimuat.<br>${esc(text)}</p>`}}
 
 /* ---------- FETCH ---------- */
 async function fetchMenus(){
@@ -148,14 +158,17 @@ function subscribe(){
 
 /* ---------- PELANGGAN ---------- */
 function renderC(){const p=document.getElementById('phone');let h='',foot='';
-const top=(t,back)=>`<div class="ph-top"><span>${back?`<button onclick="${back}" style="padding:2px 9px">←</button> `:''}<b>${t}</b></span><span class="mut" style="color:#ECE4D6">Meja ${table}</span></div>`;
+const kiosk=isKiosk();
+if(kiosk&&step=='scan')step='menu';
+const top=(t,back)=>`<div class="ph-top"><span>${back&&!kiosk?`<button onclick="${back}" style="padding:2px 9px">←</button> `:''}<b>${t}</b></span><span class="mut" style="color:#ECE4D6">Meja ${table}</span></div>`;
 if(step=='scan'){
 const link=tableLink(table);
-h=top('Menova')+`<div class="ph-body center"><p class="mut" style="margin-top:20px">Pelanggan scan QR meja untuk pesan</p>${qrSvg(table)}
+h=top('Menova')+`<div class="ph-body center"><p class="mut" style="margin-top:20px">Pelanggan scan QR meja untuk pesan</p><div class="qrbox" id="qrbox"></div>
 <label>Pilih meja</label><select onchange="table=+this.value;renderC()">${[1,2,3,4,5,6,7,8].map(i=>`<option ${i==table?'selected':''} value="${i}">Meja ${i}</option>`).join('')}</select>
 <p class="mut" style="word-break:break-all">Link asli meja: <b>${esc(link)}</b></p>
 <p><button style="width:100%;padding:10px" onclick="navigator.clipboard&&navigator.clipboard.writeText('${esc(link)}').then(()=>toast('Link disalin'))">Salin link meja</button></p>
-<p><button class="p" style="width:100%;padding:13px" onclick="step='menu';renderC()">📷 Scan QR Meja ${table}</button></p></div>`}
+<p><button class="p" style="width:100%;padding:13px" onclick="step='menu';renderC()">📷 Scan QR Meja ${table}</button></p></div>`;
+p.innerHTML=h+foot;drawQR('qrbox',link);return}
 else if(step=='menu'){
 if(!S.menu.length){h=top('Kafe Menova','step=\'scan\';renderC()')+`<div class="ph-body"><p class="mut">Memuat menu…</p></div>`;p.innerHTML=h+foot;return}
 const cats=['Semua',...new Set(S.menu.map(m=>m.cat))];
@@ -167,8 +180,8 @@ if(cartQty())foot=`<div class="bar"><button class="p" style="width:100%;padding:
 else if(step=='cart'){
 h=top('Keranjang',"step='menu';renderC()")+`<div class="ph-body">`+cartList().map(x=>`<div class="item"><div class="em">${esc(x.m.em)}</div><div class="t"><b>${esc(x.m.name)}</b><span class="mut">${rp(x.m.price)}</span></div>
 <div class="qty"><button onclick="chg(${x.m.id},-1)">−</button><b>${x.q}</b><button class="p" ${x.m.stock-x.q<=0?'disabled':''} onclick="chg(${x.m.id},1)">+</button></div></div>`).join('')+
-`<label>Nomor meja</label><select onchange="table=+this.value">${[1,2,3,4,5,6,7,8].map(i=>`<option ${i==table?'selected':''} value="${i}">Meja ${i}</option>`).join('')}</select>
-<label>Nama (opsional)</label><input id="cn" placeholder="Nama pemesan"><label>Catatan</label><input id="cx" placeholder="Contoh: less sugar"></div>`;
+(kiosk?`<p class="mut">Meja <b>${table}</b> (terkunci dari QR)</p>`:`<label>Nomor meja</label><select onchange="table=+this.value">${[1,2,3,4,5,6,7,8].map(i=>`<option ${i==table?'selected':''} value="${i}">Meja ${i}</option>`).join('')}</select>`)+
+`<label>Nama (opsional)</label><input id="cn" placeholder="Nama pemesan"><label>Catatan</label><input id="cx" placeholder="Contoh: less sugar"></div>`;
 foot=`<div class="bar"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><span>Total</span><b>${rp(cartTotal())}</b></div><button class="a" style="width:100%;padding:12px" onclick="submitOrder()">Kirim pesanan</button></div>`}
 else{const o=S.orders.find(x=>String(x.id)===String(myId));
 if(!o){step='menu';return renderC()}
@@ -198,7 +211,7 @@ await fetchAll();toast('Pesanan #'+ord.id+' masuk ke dashboard');
 }catch(e){toast('Gagal kirim: '+(e.message||e));setConn('online • Supabase')}}
 
 /* ---------- DASHBOARD ---------- */
-function renderD(){const act=S.orders.filter(o=>o.status!=ST[2]).length;
+function renderD(){if(isKiosk())return;const act=S.orders.filter(o=>o.status!=ST[2]).length;
 document.getElementById('badge').textContent=act?'('+act+')':'';
 document.getElementById('dtabs').innerHTML=[['orders','Pesanan'],['menu','Kelola Menu'],['sum','Ringkasan']].map(([k,l])=>`<button class="${dtab==k?'on':''}" onclick="dtab='${k}';renderD()">${l}</button>`).join('');
 const b=document.getElementById('dbody');
@@ -235,13 +248,14 @@ async function addM(){const n=document.getElementById('an').value.trim(),p=+docu
 try{const nid=S.menu.reduce((a,m)=>Math.max(a,m.id),10)+1;
 const {error}=await sb.from('menus').insert({id:nid,name:n,price:p,stock:+document.getElementById('as').value||0,category:document.getElementById('ac').value.trim()||'Lainnya',emoji:document.getElementById('ae').value.trim()||'🍽️'});
 if(error)throw error;toast('Menu ditambahkan')}catch(e){toast('Gagal tambah: '+(e.message||e))}}
-async function resetAll(){if(!confirm('Hapus semua pesanan dan kembalikan stok awal?'))return;
+async function resetAll(){if(isKiosk()){toast('Mode pelanggan: reset hanya via dashboard kasir');return}if(!confirm('Hapus semua pesanan dan kembalikan stok awal?'))return;
 try{setConn('reset…');
 await sb.from('order_items').delete().neq('id',0);
 await sb.from('orders').delete().neq('id',0);
 for(const m of SEED){await sb.from('menus').upsert({id:m.id,name:m.name,category:m.cat,price:m.price,stock:m.stock,emoji:m.em})}
 cart={};step='scan';myId=null;await fetchAll();toast('Demo di-reset')}catch(e){toast('Gagal reset: '+(e.message||e))}}
 (function init(){
+applyKiosk();
 try{const q=new URLSearchParams(location.search);const t=Number(q.get('table'));if(t>=1&&t<=8){table=t;step='menu'}}catch(e){}
 renderC();renderD();subscribe();fetchAll().catch(e=>{setConn('offline: '+(e.message||e));toast('Gagal konek Supabase: '+(e.message||e))});
 })();
