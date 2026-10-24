@@ -17,7 +17,7 @@ Repo ini terhubung ke 2 project Vercel, keduanya auto-deploy setiap push ke `mai
 | Project | Root Directory | URL produksi | Isi |
 |---|---|---|---|
 | `menova` | `./` (root repo) | https://menova.vercel.app | Aplikasi menu + kasir (Supabase realtime) |
-| `marketing` | `./marketing` | https://marketing-dusky-two.vercel.app | Landing page marketing |
+| `marketing` | `./marketing` | https://menova-marketing.vercel.app | Landing page marketing |
 
 Update lokal → commit → `git push origin main` → Vercel deploy otomatis.
 
